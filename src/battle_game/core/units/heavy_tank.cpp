@@ -11,12 +11,12 @@ uint32_t tank_body_model_index = 0xffffffffu;
 uint32_t tank_turret_model_index = 0xffffffffu;
 }  // namespace
 
-Tank::Tank(GameCore *game_core, uint32_t id, uint32_t player_id)
+HTank::HTank(GameCore *game_core, uint32_t id, uint32_t player_id)
     : Unit(game_core, id, player_id) {
   if (!~tank_body_model_index) {
     auto mgr = AssetsManager::GetInstance();
     {
-      /* Tank Body */
+      /* HTank Body */
       tank_body_model_index = mgr->RegisterModel(
           {
               {{-0.8f, 0.8f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
@@ -31,7 +31,7 @@ Tank::Tank(GameCore *game_core, uint32_t id, uint32_t player_id)
     }
 
     {
-      /* Tank Turret */
+      /* HTank Turret */
       std::vector<ObjectVertex> turret_vertices;
       std::vector<uint32_t> turret_indices;
       const int precision = 60;
@@ -70,7 +70,7 @@ Tank::Tank(GameCore *game_core, uint32_t id, uint32_t player_id)
   }
 }
 
-void Tank::Render() {
+void HTank::Render() {
   battle_game::SetTransformation(position_, rotation_);
   battle_game::SetTexture(0);
   battle_game::SetColor(game_core_->GetPlayerColor(player_id_));
@@ -79,13 +79,13 @@ void Tank::Render() {
   battle_game::DrawModel(tank_turret_model_index);
 }
 
-void Tank::Update() {
+void HTank::Update() {
   TankMove(1.5f, glm::radians(100.0f));
   TurretRotate();
   Fire();
 }
 
-void Tank::TankMove(float move_speed, float rotate_angular_speed) {
+void HTank::TankMove(float move_speed, float rotate_angular_speed) {
   auto player = game_core_->GetPlayer(player_id_);
   if (player) {
     auto &input_data = player->GetInputData();
@@ -117,7 +117,7 @@ void Tank::TankMove(float move_speed, float rotate_angular_speed) {
   }
 }
 
-void Tank::TurretRotate() {
+void HTank::TurretRotate() {
   auto player = game_core_->GetPlayer(player_id_);
   if (player) {
     auto &input_data = player->GetInputData();
@@ -130,7 +130,7 @@ void Tank::TurretRotate() {
   }
 }
 
-void Tank::Fire() {
+void HTank::Fire() {
   if (fire_count_down_ == 0) {
     auto player = game_core_->GetPlayer(player_id_);
     if (player) {
@@ -149,18 +149,18 @@ void Tank::Fire() {
   }
 }
 
-bool Tank::IsHit(glm::vec2 position) const {
+bool HTank::IsHit(glm::vec2 position) const {
   position = WorldToLocal(position);
   return position.x > -0.8f && position.x < 0.8f && position.y > -1.0f &&
          position.y < 1.0f && position.x + position.y < 1.6f &&
          position.y - position.x < 1.6f;
 }
 
-const char *Tank::UnitName() const {
+const char *HTank::UnitName() const {
   return "Heavy Tank";
 }
 
-const char *Tank::Author() const {
+const char *HTank::Author() const {
   return "Sesamexx";
 }
 }  // namespace battle_game::unit
