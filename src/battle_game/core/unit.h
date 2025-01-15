@@ -7,6 +7,8 @@ namespace battle_game {
 class Bullet;
 
 class Unit : public Object {
+  float max_health_{100.0f};
+
  public:
   Unit(GameCore *game_core, uint32_t id, uint32_t player_id);
 
@@ -23,6 +25,9 @@ class Unit : public Object {
   [[nodiscard]] virtual float GetSpeedScale() const;
   [[nodiscard]] virtual float BasicMaxHealth() const;
   [[nodiscard]] virtual float GetHealthScale() const;
+  void SetMaxHealth(float max_health) {
+    max_health_ = max_health;
+  }
   [[nodiscard]] virtual float GetMaxHealth() const {
     return std::max(GetHealthScale() * BasicMaxHealth(), 1.0f);
   }

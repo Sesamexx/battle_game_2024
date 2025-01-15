@@ -14,18 +14,19 @@ uint32_t tank_turret_model_index = 0xffffffffu;
 HTank::HTank(GameCore *game_core, uint32_t id, uint32_t player_id)
     : Unit(game_core, id, player_id) {
   if (!~tank_body_model_index) {
+    SetMaxHealth(150.0f);
     auto mgr = AssetsManager::GetInstance();
     {
       /* HTank Body */
       tank_body_model_index = mgr->RegisterModel(
           {
-              {{-0.8f, 0.8f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-              {{-0.8f, -1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-              {{0.8f, 0.8f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-              {{0.8f, -1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+              {{-1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+              {{-1.0f, -1.2f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+              {{1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+              {{1.0f, -1.2f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
               // distinguish front and back
-              {{0.6f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-              {{-0.6f, 1.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+              {{0.8f, 1.2f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+              {{-0.8f, 1.2f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
           },
           {0, 1, 2, 1, 2, 3, 0, 2, 5, 2, 4, 5});
     }
@@ -41,7 +42,7 @@ HTank::HTank(GameCore *game_core, uint32_t id, uint32_t player_id)
         theta *= glm::pi<float>() * 2.0f;
         auto sin_theta = std::sin(theta);
         auto cos_theta = std::cos(theta);
-        turret_vertices.push_back({{sin_theta * 0.5f, cos_theta * 0.5f},
+        turret_vertices.push_back({{sin_theta * 0.6f, cos_theta * 0.6f},
                                    {0.0f, 0.0f},
                                    {0.7f, 0.7f, 0.7f, 1.0f}});
         turret_indices.push_back(i);
@@ -83,6 +84,7 @@ void HTank::Update() {
   TankMove(1.5f, glm::radians(100.0f));
   TurretRotate();
   Fire();
+  BFire();
 }
 
 void HTank::TankMove(float move_speed, float rotate_angular_speed) {
@@ -136,16 +138,35 @@ void HTank::Fire() {
     if (player) {
       auto &input_data = player->GetInputData();
       if (input_data.mouse_button_down[GLFW_MOUSE_BUTTON_LEFT]) {
-        auto velocity = Rotate(glm::vec2{0.0f, 20.0f}, turret_rotation_);
+        auto velocity = Rotate(glm::vec2{0.0f, 10.0f}, turret_rotation_);
         GenerateBullet<bullet::CannonBall>(
             position_ + Rotate({0.0f, 1.2f}, turret_rotation_),
-            turret_rotation_, GetDamageScale(), velocity);
+            turret_rotation_, GetDamageScale() * 1.5, velocity);  // 1.5x damage
         fire_count_down_ = 2 * kTickPerSecond;  // Fire interval 2 second.
       }
     }
   }
   if (fire_count_down_) {
     fire_count_down_--;
+  }
+}
+
+void HTank::BFire() {
+  if (bfire_count_down_ == 0) {
+    auto player = game_core_->GetPlayer(player_id_);
+    if (player) {
+      auto &input_data = player->GetInputData();
+      if (input_data.mouse_button_down[GLFW_MOUSE_BUTTON_RIGHT]) {
+        auto velocity = Rotate(glm::vec2{0.0f, 10.0f}, turret_rotation_);
+        GenerateBullet<bullet::BigCannonBall>(
+            position_ + Rotate({0.0f, 1.2f}, turret_rotation_),
+            turret_rotation_, GetDamageScale() * 4, velocity);  // 4x damage
+        bfire_count_down_ = 10 * kTickPerSecond;  // Fire interval 10 second.
+      }
+    }
+  }
+  if (bfire_count_down_) {
+    bfire_count_down_--;
   }
 }
 
